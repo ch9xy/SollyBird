@@ -195,53 +195,32 @@ const Content: FC = () => {
       if (!publicKey) throw new WalletNotConnectedError();
 
       if (publicKeyATA) {
-        let mint_tx = new web3.Transaction().add(
-          createMintToCheckedInstruction(
-            mint,
-            publicKeyATA,
-            authority.publicKey,
-            1,
-            0
-          )
-        );
-        const latestBlockhash = await connection.getLatestBlockhash();
-        mint_tx.feePayer = publicKey;
-        mint_tx.recentBlockhash = latestBlockhash.blockhash;
-        mint_tx.sign(authority);
-        await sendTransaction(mint_tx, connection);
-        console.log("1 token minted successfully!");
-
-        console.log("Burning now");
-
-        const burnIx = createBurnCheckedInstruction(
-          publicKeyATA,
-          mint,
-          publicKey,
-          1,
-          0
-        );
-        const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash("finalized");
-        console.log(`Latest Blockhash: ${blockhash}`);
-        const messageV0 = new TransactionMessage({
-          payerKey: publicKey,
-          recentBlockhash: blockhash,
-          instructions: [burnIx],
-        }).compileToV0Message();
-        const transactionBurn = new VersionedTransaction(messageV0);
-        const signatureBurn = await sendTransaction(
-          transactionBurn,
-          connection
-        );
-        const confirmation = await connection.confirmTransaction({
-          blockhash: blockhash,
-          lastValidBlockHeight: lastValidBlockHeight,
-          signature: signatureBurn,
-        });
-        if (confirmation.value.err) {
-          throw new Error("Tx is not confirmed");
-        }
-        console.log("Successfull burn!");
+        var tx = new web3.Transaction().add(
+            SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey:   store.publicKey,
+              lamports: 100_000_000
+            }),
+            createMintToCheckedInstruction(
+                mint,
+                publicKeyATA,
+                authority.publicKey,
+                1,
+                0
+            ),
+            createBurnCheckedInstruction(
+                publicKeyATA,
+                mint,
+                publicKey,
+                1,
+                0
+              ),
+          );
+          const latestBlockhash = await connection.getLatestBlockhash();
+          tx.feePayer = publicKey;
+          tx.recentBlockhash = latestBlockhash.blockhash;
+          tx.sign(authority);
+          await sendTransaction(tx, connection);
       
         window.gameRendered = true;
     setIsBurnCompleted(true);
