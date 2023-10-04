@@ -123,6 +123,9 @@ const render = () => {
         ].every((elem) => elem)
       ) {
         gamePlaying = false;
+        window?.gameover && window.gameover(currentScore);
+        window.gameRendered = false;
+        console.log("game over");
         setup();
       }
     });
@@ -167,6 +170,8 @@ const render = () => {
 };
 
 // launch setup
+window.setup = setup;
+window.renderGame = render;
 setup();
 img.onload = render;
 

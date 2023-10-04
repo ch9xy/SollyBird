@@ -3,8 +3,11 @@ import React, { useRef, useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import "./css/game.css";
 const FlappyBird = () => {
+  const [test, setTest] = useState("Didn't change yet");
   useEffect(() => {
     window.gameRendered = true;
+    window?.setup && window.setup();
+    window?.render && window.render();
   }, []);
 
   return (
@@ -12,11 +15,6 @@ const FlappyBird = () => {
       <Helmet>
         <script src="./game.js" type="text/javascript" />
       </Helmet>
-      <h1>Solly Bird</h1>
-      <div className="score-container">
-        <div id="bestScore"></div>
-        <div id="currentScore"></div>
-      </div>
 
       <canvas id="canvas" width="431" height="768"></canvas>
     </>

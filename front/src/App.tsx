@@ -39,7 +39,14 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { FC, ReactNode, useMemo, useCallback, useState } from "react";
+import {
+  FC,
+  ReactNode,
+  useMemo,
+  useCallback,
+  useState,
+  useEffect,
+} from "react";
 import {
   TOKEN_PROGRAM_ID,
   MINT_SIZE,
@@ -124,10 +131,23 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 const Content: FC = () => {
   const [publicKeyATA, setPublicKeyATA] = useState<PublicKey | null>(null);
   const [isBurnCompleted, setIsBurnCompleted] = useState<boolean>(false);
+  const [gameOverScore, setGameOverScore] = useState<number>(0);
   // const { connection } = useConnection();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
-
+  useEffect(() => {
+    // @ts-ignore
+    window.gameover = (score: number) => {
+      setGameOverScore(score);
+    };
+  }, []);
+  useEffect(() => {
+    console.log(gameOverScore);
+    // @ts-ignore
+    if (!window.gameRendered) {
+      setIsBurnCompleted(false);
+    }
+  }, [gameOverScore]);
   const grabPrize = async () => {
     if (publicKey) {
       var tx = new web3.Transaction().add(
@@ -164,6 +184,8 @@ const Content: FC = () => {
   };
 
   const playButton = async () => {
+    setIsBurnCompleted(true);
+    return;
     try {
       if (!publicKey) throw new WalletNotConnectedError();
 
@@ -215,6 +237,7 @@ const Content: FC = () => {
           throw new Error("Tx is not confirmed");
         }
         console.log("Successfull burn!");
+        setIsBurnCompleted(true);
       } else {
         console.log("publicKeyATA is null");
       }
@@ -269,8 +292,15 @@ const Content: FC = () => {
   }
   return (
     <div className="App">
+      <h1>Solly Bird</h1>
+      <div className="score-container">
+        <div id="bestScore"></div>
+        <div id="currentScore"></div>
+      </div>
       {isBurnCompleted ? (
-        <FlappyBird />
+        <>
+          <FlappyBird />
+        </>
       ) : (
         <>
           <div className="navbar">
