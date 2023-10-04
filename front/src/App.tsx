@@ -60,6 +60,8 @@ import {
 } from "@solana/spl-token";
 import { token } from "@coral-xyz/anchor/dist/cjs/utils";
 import FlappyBird from "./Game";
+import HomePage from "./components/HomePage";
+import { Button } from "react-bootstrap";
 
 require("./App.css");
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -292,28 +294,33 @@ const Content: FC = () => {
   }
   return (
     <div className="App">
-      <h1>Solly Bird</h1>
+      {/* <h1>Solly Bird</h1>
       <div className="score-container">
         <div id="bestScore"></div>
         <div id="currentScore"></div>
-      </div>
+      </div> */}
+      {!publicKey && <HomePage />}
+      <WalletMultiButton />
+      {publicKey && <><Button onClick={signIn} className="connect-btn">
+        Sign In
+      </Button>
+      <Button onClick={playButton} className="connect-btn">
+        Play
+      </Button>
+      <Button onClick={grabPrize} className="connect-btn">
+        Grab Your Prize
+      </Button></>}
+      
       {isBurnCompleted ? (
         <>
           <FlappyBird />
         </>
       ) : (
         <>
-          <div className="navbar">
+          {/* <div className="navbar">
             <div className="navbar-inner ">
-              <a id="title" className="brand" href="#">
-                Brand
-              </a>
-              <ul className="nav"></ul>
               <ul className="nav pull-right">
-                <li>
-                  <a href="#">White Paper</a>
-                </li>
-                <li className="divider-vertical"></li>
+
                 <li>
                   <WalletMultiButton />
                 </li>
@@ -334,7 +341,7 @@ const Content: FC = () => {
           </button>
           <button className="btn" onClick={grabPrize}>
             GRAB YOUR PRIZE!
-          </button>
+          </button> */}
         </>
       )}
     </div>
