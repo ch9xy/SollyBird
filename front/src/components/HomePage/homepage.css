@@ -12,10 +12,11 @@
     -webkit-background-clip: text;
     color: transparent;
     margin-bottom: 20px;
+    font-size: 100px;
   }
   .subtitle {
     font-size: 20px;
-    color:rgb(240, 135, 255) !important;
+    color:rgb(110, 31, 206) !important;
   }
   
   .connect-btn {

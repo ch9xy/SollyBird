@@ -27,6 +27,7 @@ let pipeLoc = () =>
   pipeWidth;
 
 let setup = () => {
+    if(!window.gameRendered) return;
 let canvas = document.getElementById("canvas");
 let cTenth = canvas.width / 10;
 let ctx = canvas.getContext("2d");
@@ -130,12 +131,14 @@ let ctx = canvas.getContext("2d");
           pipe[1] > flyHeight || pipe[1] + pipeGap < flyHeight + size[1],
         ].every((elem) => elem)
       ) {
-        gamePlaying = false;
-        console.log(window.gameover);
+        console.log("Entered end of game")
+       
+            gamePlaying = false;
         window.gameOverScore = currentScore;
-        window?.gameover && window.gameover(currentScore);
         window.gameRendered = false;
-        console.log("game over");
+        window?.gameover && window.gameover(currentScore);
+       
+        
         setup();
       }
     });
@@ -165,15 +168,16 @@ let ctx = canvas.getContext("2d");
     );
     flyHeight = canvas.height / 2 - size[1] / 2;
     // text accueil
-    ctx.fillText(`Best score : ${bestScore}`, 85, 245);
-    ctx.fillText("Click to play", 90, 535);
+    ctx.fillText(`Click to play`, 85, 245);
+    // ctx.fillText(`Best score : ${bestScore}`, 85, 245);
+    //ctx.fillText("Click to play", 90, 535);
     ctx.font = "bold 30px courier";
   }
 
-  document.getElementById("bestScore").innerHTML = `Best : ${bestScore}`;
-  document.getElementById(
-    "currentScore"
-  ).innerHTML = `Current : ${currentScore}`;
+//   document.getElementById("bestScore").innerHTML = `Best : ${bestScore}`;
+//   document.getElementById(
+//     "currentScore"
+//   ).innerHTML = `Current : ${currentScore}`;
 
   // tell the browser to perform anim
   window.requestAnimationFrame(render);
@@ -182,11 +186,16 @@ let ctx = canvas.getContext("2d");
 // launch setup
 window.setup = setup;
 window.renderGame = render;
+window.addClickListener = () => {
+    document.addEventListener("click", () => {
+  if (window.gameRendered) gamePlaying = true;
+});
+}
 // setup();
 // img.onload = render;
 
 // start game
-document.addEventListener("click", () => {
-  if (window.gameRendered) gamePlaying = true;
-});
+// document.addEventListener("click", () => {
+//   if (window.gameRendered) gamePlaying = true;
+// });
 window.onclick = () => (flight = jump);

@@ -136,21 +136,22 @@ const Content: FC = () => {
   const [isBurnCompleted, setIsBurnCompleted] = useState<boolean>(false);
   const [gameOverScore, setGameOverScore] = useState<number>(0);
   // const { connection } = useConnection();
+  const [isGameOver, setIsGameOver] = useState(false);
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   useEffect(() => {
     // @ts-ignore
     window.gameover = (score: number) => {
       setGameOverScore(score);
-      
+      setIsGameOver(true);
     };
   }, []);
   useEffect(() => {
-    console.log("Game Score is : ",gameOverScore);
+    console.log("Game over score is :",gameOverScore)
     // @ts-ignore
-    if (!window.gameRendered) {
+    if (!window.gameRendered ) {
         window.gameRendered = false;
-
+      
       setIsBurnCompleted(false);
     }
   }, [gameOverScore]);
@@ -192,6 +193,7 @@ const Content: FC = () => {
   const playButton = async () => {
     window.gameRendered = true;
     setIsBurnCompleted(true);
+    setIsGameOver(false);
     return;
     try {
       if (!publicKey) throw new WalletNotConnectedError();
@@ -302,23 +304,29 @@ const Content: FC = () => {
         <Helmet>
         <script src="./game.js" type="text/javascript" />
       </Helmet>
-     <div className="score-container">
+     {/* <div className="score-container">
         <div id="bestScore"></div>
         <div id="currentScore"></div>
-      </div>
-      {!publicKey && <HomePage />}
+      </div> */}
+      {!publicKey && !window?.gameRendered && <HomePage title= "Solly Bird" subtitle="Play 2 earn flappy bird game in speed of solana" />}
+      {publicKey && !publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage title="Sign In To Play"  />}
+      {publicKey && publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage subtitle="Press play to start"  />}
+      
+      {isGameOver && <HomePage title="Game Over" subtitle={`Your prize is : ${gameOverScore}`}/>}
       <WalletMultiButton />
-      {publicKey && !isBurnCompleted && <><Button style={{marginTop: 15}} onClick={signIn} className="connect-btn">
+      {publicKeyATA && !window?.gameRendered &&<Button style={{marginTop: 15}}  onClick={playButton} className="connect-btn">
+        Play
+      </Button>}
+      {isGameOver && gameOverScore>0 && !window?.gameRendered && <Button onClick={grabPrize} className="connect-btn">
+        Grab Your Prize
+      </Button>}
+      {!publicKeyATA && !window?.gameRendered && <>
+      <Button style={{marginTop: 15}} onClick={signIn} className="connect-btn">
         Sign In
       </Button>
-      <Button onClick={playButton} className="connect-btn">
-        Play
-      </Button>
-      <Button onClick={grabPrize} className="connect-btn">
-        Grab Your Prize
-      </Button></>}
+      </>}
       
-      {isBurnCompleted && publicKey ? (
+      {isBurnCompleted && publicKey && window?.gameRendered ? (
         <>
           <FlappyBird />
         </>

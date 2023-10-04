@@ -1,12 +1,12 @@
 import React from "react";
 import "./homepage.css";
 
-const HomePage = () => {
+const HomePage = ({title, subtitle}) => {
   return (
     <>
-      <h1 className="main-title">Solly Bird</h1>
+      <h1 className="main-title">{title}</h1>
       <h2 className="subtitle">
-        Play 2 earn flappy bird game in speed of solana
+        {subtitle}
       </h2>
     </>
   );
