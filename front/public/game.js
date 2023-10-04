@@ -1,7 +1,7 @@
-const gravity = 0.5;
-const speed = 6.2;
-const size = [51, 36];
-const jump = -11.5;
+const gravity = 0.28;
+const speed = 3.2;
+const size = [25.5, 18];
+const jump = -7;
 
 
 let index = 0,
