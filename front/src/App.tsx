@@ -123,7 +123,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
 const Content: FC = () => {
   const [publicKeyATA, setPublicKeyATA] = useState<PublicKey | null>(null);
-
+  const [isBurnCompleted, setIsBurnCompleted] = useState<boolean>(false);
   // const { connection } = useConnection();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
@@ -269,39 +269,44 @@ const Content: FC = () => {
   }
   return (
     <div className="App">
-      <FlappyBird />
-      {/* <div className="navbar">
-        <div className="navbar-inner ">
-          <a id="title" className="brand" href="#">
-            Brand
-          </a>
-          <ul className="nav"></ul>
-          <ul className="nav pull-right">
-            <li>
-              <a href="#">White Paper</a>
-            </li>
-            <li className="divider-vertical"></li>
-            <li>
-              <WalletMultiButton />
-            </li>
-          </ul>
-        </div>
-      </div>
-      <input
-        value={lamports}
-        type="number"
-        onChange={(e) => setTheLamports(e)}
-      ></input>
-      <br></br>
-      <button className="btn" onClick={signIn}>
-        Sign In{" "}
-      </button>
-      <button className="btn" onClick={playButton}>
-        Play
-      </button>
-      <button className="btn" onClick={grabPrize}>
-        GRAB YOUR PRIZE!
-      </button> */}
+      {isBurnCompleted ? (
+        <FlappyBird />
+      ) : (
+        <>
+          <div className="navbar">
+            <div className="navbar-inner ">
+              <a id="title" className="brand" href="#">
+                Brand
+              </a>
+              <ul className="nav"></ul>
+              <ul className="nav pull-right">
+                <li>
+                  <a href="#">White Paper</a>
+                </li>
+                <li className="divider-vertical"></li>
+                <li>
+                  <WalletMultiButton />
+                </li>
+              </ul>
+            </div>
+          </div>
+          <input
+            value={lamports}
+            type="number"
+            onChange={(e) => setTheLamports(e)}
+          ></input>
+          <br></br>
+          <button className="btn" onClick={signIn}>
+            Sign In{" "}
+          </button>
+          <button className="btn" onClick={playButton}>
+            Play
+          </button>
+          <button className="btn" onClick={grabPrize}>
+            GRAB YOUR PRIZE!
+          </button>
+        </>
+      )}
     </div>
   );
 };
