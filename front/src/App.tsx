@@ -36,7 +36,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 const idl = require("./solly_bird_2.json");
 const programId = new PublicKey("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
-const program = new Program(idl, programId);
+//const program = new Program(idl, programId);
 
 const lamports = 1;
 let thelamports = 0;
@@ -95,43 +95,45 @@ const Content: FC = () => {
     
   
 
-    
-
     // const { connection } = useConnection();
     const { connection } = useConnection();
     const { publicKey, sendTransaction } = useWallet();
 
     const grabPrize = async () => {
-        if (publicKey) {
-            const amountBN = new anchor.BN(1);
-            const amountBuffer = Buffer.from(amountBN.toArray());
-            //const amountToTransfer = new Uint8Array([0, 0, 3, 232]);
-            //const amountBuffer = await Buffer.from(amountToTransfer);
 
-        //    const tx = new web3.Transaction().add(
-        //        new TransactionInstruction({
-        //        programId: programId,
-        //        keys: [ 
-        //            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
-        //            {pubkey: store.publicKey, isSigner: true, isWritable: true},
-        //            {pubkey: publicKey, isSigner: false, isWritable: true}
-        //          ]
-        //}));
-        //const latestBlockhash = await connection.getLatestBlockhash();
-        //tx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
-        //tx.recentBlockhash = latestBlockhash.blockhash;
-        ////tx.feePayer = publicKey;
-        //tx.sign(store);
-        //const signature = await sendTransaction(tx, connection);
-        } else {
-            console.log("Failed to grabPrize");
-        }
+            if (publicKey) {
+        var tx = new web3.Transaction().add(
+            SystemProgram.transfer({
+              fromPubkey: store.publicKey,
+              toPubkey:   publicKey,
+              lamports: 1_000_000_000
+            }),
+          );
+         const latestBlockhash = await connection.getLatestBlockhash();
+         tx.feePayer = publicKey;
+         tx.recentBlockhash = latestBlockhash.blockhash;
+         tx.sign(store);
+         await sendTransaction(tx, connection);
 
-        const tx = program.methods.transferSol().accounts({
-            sender: store.publicKey,
-            receiver: publicKey,
-            systemProgram: SystemProgram.programId
-        }).signers([store]).rpc();
+        let user1SolBalance = await connection.getBalance(store.publicKey);
+      console.log(`User SOL balance: ${user1SolBalance} lamports`);
+
+      // Get SOL balance for the admin account
+      if (publicKey){
+      let user2SolBalance = await connection.getBalance(publicKey);
+      console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
+    }
+}
+
+        console.log("After: ");
+        let user1SolBalance = await connection.getBalance(store.publicKey);
+      console.log(`User SOL balance: ${user1SolBalance} lamports`);
+
+      
+      if (publicKey){
+      let user2SolBalance = connection.getBalance(publicKey);
+      console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
+    }
     }
 
     const playButton = async () => {
@@ -200,9 +202,7 @@ const Content: FC = () => {
 
         });
 
-        //let lamportsI = LAMPORTS_PER_SOL*lamports;
         console.log(publicKey.toBase58());
-        //console.log("lamports sending: {}", thelamports)
 
         let publicKeyATA = await getAssociatedTokenAddress(
             mint,
@@ -215,7 +215,7 @@ const Content: FC = () => {
             console.log('The ATA is live and initialized.');
             console.log("Processing to the main menu now.");
 
-            //
+            
         } else {
             
             const transaction = new Transaction().add(
