@@ -3,9 +3,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { ConnectionProvider, WalletProvider, useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Program, web3, Provider, Wallet, BN  } from "@coral-xyz/anchor";
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Button } from '@solana/wallet-adapter-react-ui/lib/types/Button';
 
-import anchorProgramId from "./solly_bird_2.json";
 import '../src/css/bootstrap.css'
 import {
     //GlowWalletAdapter,
@@ -17,10 +15,9 @@ import {
     //SolletWalletAdapter,
     TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import fs from "fs";
 //import { actions, utils, programs, NodeWallet, Connection} from '@metaplex/js'; 
-import { clusterApiUrl, Transaction, SystemProgram, Keypair, LAMPORTS_PER_SOL, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import React, { FC, ReactNode, useMemo, useCallback, useState } from 'react';
+import { clusterApiUrl, VersionedTransaction, TransactionMessage, Transaction, SystemProgram, Keypair, LAMPORTS_PER_SOL, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { FC, ReactNode, useMemo, useCallback, useState } from 'react';
 import {
     TOKEN_PROGRAM_ID,
     MINT_SIZE,
@@ -30,23 +27,24 @@ import {
     createMintToCheckedInstruction,
     createTransferInstruction,
     getOrCreateAssociatedTokenAccount,
+    createBurnCheckedInstruction,
   } from "@solana/spl-token";
+import { token } from '@coral-xyz/anchor/dist/cjs/utils';
 
 require('./App.css');
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 const idl = require("./solly_bird_2.json");
-const program = new PublicKey("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
+const programId = new PublicKey("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
+const program = new Program(idl, programId);
+
 const lamports = 1;
 let thelamports = 0;
 let mint = new PublicKey("minqX2MJeTCVzJVJK3cZZfTyTYer84K9kLs8FuUNA3n");
 const authority = anchor.web3.Keypair.fromSecretKey(new Uint8Array([158,79,224,201,82,100,135,45,199,144,33,44,151,222,88,219,19,145,96,78,199,207,83,235,201,97,130,234,68,110,248,20,0,54,86,35,17,102,7,217,145,40,229,123,9,214,3,247,226,186,175,231,175,100,12,18,143,89,248,49,199,64,117,188]));
+const store = anchor.web3.Keypair.fromSecretKey(new Uint8Array([189,230,61,49,199,101,149,191,214,52,33,115,103,195,141,195,218,111,83,95,31,69,24,10,38,83,25,179,68,151,132,195,13,9,158,158,58,21,160,159,184,212,151,83,15,77,21,249,58,118,47,21,145,201,54,82,84,56,144,77,37,44,176,37]));
+//const systemProgramId = new PublicKey('ComputeBudget111111111111111111111111111111');
 
-
-function getWallet(){
-
-    
-}
 const App: FC = () => {
 
 
@@ -73,11 +71,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     const wallets = useMemo(
         () => [
             new LedgerWalletAdapter(),
-            new PhantomWalletAdapter(),
-            //new GlowWalletAdapter(),
-            //new SlopeWalletAdapter(),
-            //new SolletExtensionWalletAdapter(), 
-            //new SolletWalletAdapter(),
+            new PhantomWalletAdapter({ network}),
             new SolflareWalletAdapter({ network }),
             new TorusWalletAdapter(),
         ],
@@ -96,8 +90,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 const Content: FC = () => {
-    //let [lamports, setLamports] = useState(.1);
-    //let [wallet, setWallet] = useState("9m5kFDqgpf7Ckzbox91RYcADqcmvxW4MmuNvroD5H2r9");
+
     const [publicKeyATA, setPublicKeyATA] = useState<PublicKey | null>(null);
     
   
@@ -106,10 +99,40 @@ const Content: FC = () => {
 
     // const { connection } = useConnection();
     const { connection } = useConnection();
-    const { publicKey, sendTransaction, wallet, signTransaction } = useWallet();
-    const programId = new PublicKey("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
-    const burnAddress = new PublicKey("burruoB1KBRvKRFWsg1Zkp35g1n9Fsms9WExFGCzuUD");
+    const { publicKey, sendTransaction } = useWallet();
 
+    const grabPrize = async () => {
+        if (publicKey) {
+            const amountBN = new anchor.BN(1);
+            const amountBuffer = Buffer.from(amountBN.toArray());
+            //const amountToTransfer = new Uint8Array([0, 0, 3, 232]);
+            //const amountBuffer = await Buffer.from(amountToTransfer);
+
+        //    const tx = new web3.Transaction().add(
+        //        new TransactionInstruction({
+        //        programId: programId,
+        //        keys: [ 
+        //            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+        //            {pubkey: store.publicKey, isSigner: true, isWritable: true},
+        //            {pubkey: publicKey, isSigner: false, isWritable: true}
+        //          ]
+        //}));
+        //const latestBlockhash = await connection.getLatestBlockhash();
+        //tx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+        //tx.recentBlockhash = latestBlockhash.blockhash;
+        ////tx.feePayer = publicKey;
+        //tx.sign(store);
+        //const signature = await sendTransaction(tx, connection);
+        } else {
+            console.log("Failed to grabPrize");
+        }
+
+        const tx = program.methods.transferSol().accounts({
+            sender: store.publicKey,
+            receiver: publicKey,
+            systemProgram: SystemProgram.programId
+        }).signers([store]).rpc();
+    }
 
     const playButton = async () => {
         try {
@@ -117,7 +140,6 @@ const Content: FC = () => {
 
             if (publicKeyATA) {
 
-              
                 let mint_tx = new web3.Transaction().add(
                     createMintToCheckedInstruction(
                         mint,
@@ -127,46 +149,45 @@ const Content: FC = () => {
                         0
                     )
                 );
-
-                
                 const latestBlockhash = await connection.getLatestBlockhash();
                 mint_tx.feePayer = publicKey;
                 mint_tx.recentBlockhash = latestBlockhash.blockhash;
                 mint_tx.sign(authority);
-                console.log("here0");
-                const signature1 = await sendTransaction(mint_tx, connection);
-                        console.log("here1");
-
-            
-           console.log("here2");
-
-                console.log("Tokens minted successfully!");
-
+                await sendTransaction(mint_tx, connection);
+                console.log("1 token minted successfully!");
 
                 console.log("Burning now");
 
-                let burnATA = await getAssociatedTokenAddress(
+                const burnIx = createBurnCheckedInstruction(
+                    publicKeyATA,
                     mint,
-                    burnAddress,
+                    publicKey,
+                    1,
+                    0
                   );
-                        const burn_tx = new web3.Transaction().add(
-                            createTransferInstruction(
-                                publicKeyATA,
-                                burnATA,
-                                publicKey,
-                                1
-                            )
-                        );
-                        const latestBlockhash2 = await connection.getLatestBlockhash();
-                        burn_tx.feePayer = publicKey;
-                        burn_tx.recentBlockhash = latestBlockhash2.blockhash;
-                        const signature2 = await sendTransaction(burn_tx, connection); 
+                  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+                console.log(`Latest Blockhash: ${blockhash}`);
+                const messageV0 = new TransactionMessage({
+                  payerKey: publicKey,
+                  recentBlockhash: blockhash,
+                  instructions: [burnIx],
+                }).compileToV0Message();
+                const transactionBurn = new VersionedTransaction(messageV0);
+                const signatureBurn = await sendTransaction(transactionBurn, connection);
+                const confirmation = await connection.confirmTransaction({
+                    blockhash: blockhash,
+                    lastValidBlockHeight: lastValidBlockHeight,
+                    signature: signatureBurn,
+                });
+                if (confirmation.value.err) { throw new Error("Tx is not confirmed")}
+                console.log("Successfull burn!");
+
             } else {
                 console.log("publicKeyATA is null");
             }
             
         } catch (error) {
-          console.error("Error minting tokens:", error);
+          console.error("Error: ", error);
         }
       };
  
@@ -253,6 +274,7 @@ function setTheLamports(e: any)
         <br></br>
       <button className='btn' onClick={signIn}>Sign In </button>
       <button className='btn' onClick={playButton}>Play</button>
+      <button className='btn' onClick={grabPrize}>GRAB YOUR PRIZE!</button>
 
 
         </div>
