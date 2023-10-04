@@ -191,10 +191,6 @@ const Content: FC = () => {
   };
 
   const playButton = async () => {
-    window.gameRendered = true;
-    setIsBurnCompleted(true);
-    setIsGameOver(false);
-    return;
     try {
       if (!publicKey) throw new WalletNotConnectedError();
 
@@ -246,7 +242,10 @@ const Content: FC = () => {
           throw new Error("Tx is not confirmed");
         }
         console.log("Successfull burn!");
-        setIsBurnCompleted(true);
+      
+        window.gameRendered = true;
+    setIsBurnCompleted(true);
+    setIsGameOver(false);
       } else {
         console.log("publicKeyATA is null");
       }
