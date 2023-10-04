@@ -290,12 +290,12 @@ const Content: FC = () => {
       {publicKey && !publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage title="Sign In To Play"  />}
       {publicKey && publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage subtitle="Press play to start"  />}
       
-      {isGameOver && <HomePage title="Game Over" subtitle={`Your prize is : ${gameOverScore}`}/>}
+      {isGameOver && <HomePage title="Game Over" subtitle={`Your score is : ${gameOverScore}`}/>}
       <WalletMultiButton />
       {publicKeyATA && !window?.gameRendered &&<Button style={{marginTop: 15}}  onClick={playButton} className="connect-btn">
         Play
       </Button>}
-      {isGameOver && gameOverScore>0 && !window?.gameRendered && <Button onClick={grabPrize} className="connect-btn">
+      {isGameOver && gameOverScore>5 && !window?.gameRendered && <Button onClick={grabPrize} className="connect-btn">
         Grab Your Prize
       </Button>}
       {!publicKeyATA && !window?.gameRendered && <>
