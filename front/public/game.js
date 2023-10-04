@@ -1,15 +1,8 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const img = new Image();
-img.src = "https://i.ibb.co/Q9yv5Jk/flappy-bird-set.png";
-
-// general settings
-let gamePlaying = false;
 const gravity = 0.5;
 const speed = 6.2;
 const size = [51, 36];
 const jump = -11.5;
-const cTenth = canvas.width / 10;
+
 
 let index = 0,
   bestScore = 0,
@@ -21,11 +14,22 @@ let index = 0,
 // pipe settings
 const pipeWidth = 78;
 const pipeGap = 270;
-const pipeLoc = () =>
+
+
+let img = new Image();
+img.src = "https://i.ibb.co/Q9yv5Jk/flappy-bird-set.png";
+
+// general settings
+let gamePlaying = false;
+
+let pipeLoc = () =>
   Math.random() * (canvas.height - (pipeGap + pipeWidth) - pipeWidth) +
   pipeWidth;
 
-const setup = () => {
+let setup = () => {
+let canvas = document.getElementById("canvas");
+let cTenth = canvas.width / 10;
+let ctx = canvas.getContext("2d");
   currentScore = 0;
   flight = jump;
 
@@ -38,7 +42,11 @@ const setup = () => {
     .map((a, i) => [canvas.width + i * (pipeGap + pipeWidth), pipeLoc()]);
 };
 
-const render = () => {
+let render = () => {
+    if(!window.gameRendered) return;
+    let canvas = document.getElementById("canvas");
+let cTenth = canvas.width / 10;
+let ctx = canvas.getContext("2d");
   // make the pipe and bird moving
   index++;
 
@@ -123,6 +131,8 @@ const render = () => {
         ].every((elem) => elem)
       ) {
         gamePlaying = false;
+        console.log(window.gameover);
+        window.gameOverScore = currentScore;
         window?.gameover && window.gameover(currentScore);
         window.gameRendered = false;
         console.log("game over");
@@ -172,8 +182,8 @@ const render = () => {
 // launch setup
 window.setup = setup;
 window.renderGame = render;
-setup();
-img.onload = render;
+// setup();
+// img.onload = render;
 
 // start game
 document.addEventListener("click", () => {

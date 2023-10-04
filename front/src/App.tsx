@@ -39,6 +39,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
+import { Helmet } from "react-helmet";
 import {
   FC,
   ReactNode,
@@ -141,12 +142,15 @@ const Content: FC = () => {
     // @ts-ignore
     window.gameover = (score: number) => {
       setGameOverScore(score);
+      
     };
   }, []);
   useEffect(() => {
-    console.log(gameOverScore);
+    console.log("Game Score is : ",gameOverScore);
     // @ts-ignore
     if (!window.gameRendered) {
+        window.gameRendered = false;
+
       setIsBurnCompleted(false);
     }
   }, [gameOverScore]);
@@ -186,6 +190,7 @@ const Content: FC = () => {
   };
 
   const playButton = async () => {
+    window.gameRendered = true;
     setIsBurnCompleted(true);
     return;
     try {
@@ -294,14 +299,16 @@ const Content: FC = () => {
   }
   return (
     <div className="App">
-      {/* <h1>Solly Bird</h1>
-      <div className="score-container">
+        <Helmet>
+        <script src="./game.js" type="text/javascript" />
+      </Helmet>
+     <div className="score-container">
         <div id="bestScore"></div>
         <div id="currentScore"></div>
-      </div> */}
+      </div>
       {!publicKey && <HomePage />}
       <WalletMultiButton />
-      {publicKey && <><Button onClick={signIn} className="connect-btn">
+      {publicKey && !isBurnCompleted && <><Button style={{marginTop: 15}} onClick={signIn} className="connect-btn">
         Sign In
       </Button>
       <Button onClick={playButton} className="connect-btn">
@@ -311,7 +318,7 @@ const Content: FC = () => {
         Grab Your Prize
       </Button></>}
       
-      {isBurnCompleted ? (
+      {isBurnCompleted && publicKey ? (
         <>
           <FlappyBird />
         </>
