@@ -10,7 +10,8 @@ import {
   useConnection,
   useWallet,
 } from "@solana/wallet-adapter-react";
-import { Program, web3, Provider, Wallet, BN } from "@coral-xyz/anchor";
+import { Program, web3, AnchorProvider, Wallet, BN } from "@coral-xyz/anchor";
+import { Provider } from "@project-serum/anchor";
 import {
   WalletModalProvider,
   WalletMultiButton,
@@ -38,6 +39,7 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   TransactionInstruction,
+  Connection,
 } from "@solana/web3.js";
 import { Helmet } from "react-helmet";
 import {
@@ -69,7 +71,8 @@ require("@solana/wallet-adapter-react-ui/styles.css");
 
 const idl = require("./solly_bird_2.json");
 const programId = new PublicKey("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
-//const program = new Program(idl, programId);
+
+
 
 const lamports = 1;
 let thelamports = 0;
@@ -109,9 +112,6 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
   // You can also provide a custom RPC endpoint.
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
-  // Only the wallets you configure here will be compiled into your application, and only the dependencies
-  // of wallets that your users connect to will be loaded.
   const wallets = useMemo(
     () => [
       new LedgerWalletAdapter(),
@@ -136,6 +136,19 @@ const Content: FC = () => {
   const [isBurnCompleted, setIsBurnCompleted] = useState<boolean>(false);
   const [gameOverScore, setGameOverScore] = useState<number>(0);
   // const { connection } = useConnection();
+
+    function GetProvider() {
+    const wallet = useAnchorWallet()!;
+    const network = "https://api.devnet.solana.com";
+    const connection = new Connection(network);
+    //const provider = new Provider(connection, wallet, {"preflightCommitment": "processed"});
+    const provider2 = new AnchorProvider(connection, wallet, {"preflightCommitment": "processed"});
+    return provider2;
+  }
+  const program = new Program(idl, programId, GetProvider());
+  
+  
+
   const [isGameOver, setIsGameOver] = useState(false);
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
@@ -151,7 +164,6 @@ const Content: FC = () => {
     // @ts-ignore
     if (!window.gameRendered ) {
         window.gameRendered = false;
-      
       setIsBurnCompleted(false);
     }
   }, [gameOverScore]);
@@ -168,6 +180,24 @@ const Content: FC = () => {
       tx.recentBlockhash = latestBlockhash.blockhash;
       tx.sign(store);
       await sendTransaction(tx, connection);
+
+      let user1SolBalance = await connection.getBalance(store.publicKey);
+      console.log(`User SOL balance: ${user1SolBalance} lamports`);
+
+      // Get SOL balance for the admin account
+      if (publicKey) {
+        let user2SolBalance = await connection.getBalance(publicKey);
+        console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
+      }
+    }
+
+    console.log("After: ");
+    let user1SolBalance = await connection.getBalance(store.publicKey);
+    console.log(`User SOL balance: ${user1SolBalance} lamports`);
+
+    if (publicKey) {
+      let user2SolBalance = connection.getBalance(publicKey);
+      console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
     }
   };
 
@@ -176,7 +206,8 @@ const Content: FC = () => {
       if (!publicKey) throw new WalletNotConnectedError();
 
       if (publicKeyATA) {
-        const tx = new web3.Transaction();
+
+       const tx = new web3.Transaction();
         console.log("testing all in anchor");
        
        const tx0 = await program.methods.transferSol(new anchor.BN(100_000_000)).accounts({
@@ -206,8 +237,8 @@ const Content: FC = () => {
        tx.sign(authority);
        await sendTransaction(tx, connection);     
 
-        
-      
+       
+  
         window.gameRendered = true;
     setIsBurnCompleted(true);
     setIsGameOver(false);
