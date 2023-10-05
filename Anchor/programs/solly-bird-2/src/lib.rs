@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_spl::token;
-use anchor_spl::token::{Token, Mint, MintTo, Transfer as SplTransfer};
-use solana_program::system_instruction;
+use anchor_spl::token::{Token, Burn, Mint, MintTo, Transfer as SplTransfer, Approve};
+use anchor_lang::solana_program::system_instruction;
 
 declare_id!("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
 
@@ -28,16 +28,22 @@ pub mod solly_bird_2 {
         Ok(())
     }
 
-    pub fn transfer_sol(ctx: Context<TransferSol>) -> Result<()> {
+    pub fn transfer_sol(ctx: Context<TransferSol>, amount: u64) -> Result<()> {
         
-       let cpi_context = CpiContext::new(
-        ctx.accounts.system_program.to_account_info(),
-        system_program::Transfer {
-            from: ctx.accounts.sender.clone(),
-            to: ctx.accounts.receiver.clone(),
-        });
+        let from_account = &ctx.accounts.from;
+        let to_account = &ctx.accounts.to;
 
-        system_program::transfer(cpi_context, 100_000_000)?;
+        let transfer_instruction = system_instruction::transfer(from_account.key, to_account.key, amount);
+
+        anchor_lang::solana_program::program::invoke_signed(
+            &transfer_instruction,
+            &[
+                from_account.to_account_info(),
+                to_account.to_account_info(),
+                ctx.accounts.system_program.to_account_info()
+            ],
+            &[],
+        )?;
 
         Ok(())
     }
@@ -54,7 +60,26 @@ pub mod solly_bird_2 {
 
         Ok(())
     }
+
+
+
+    pub fn burn_token(ctx: Context<BurnToken>) -> Result<()> {
+        
+        let cpi_accounts = Burn {
+            mint: ctx.accounts.mint.to_account_info(),
+            from: ctx.accounts.from.to_account_info(),
+            authority: ctx.accounts.authority.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        token::burn(cpi_ctx, 1)?;
+        Ok(())
+    }
 }
+
+
 
 #[derive(Accounts)]
 pub struct MintToken<'info> {
@@ -72,13 +97,12 @@ pub struct MintToken<'info> {
 
 #[derive(Accounts)]
 pub struct TransferSol<'info> {
-    pub system_program: Program<'info, System>,
-    #[account(mut, signer)]
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    pub sender: AccountInfo<'info>,
     #[account(mut)]
+    pub from: Signer<'info>,
     /// CHECK: This is not dangerous because we don't read or write from this account
-    pub receiver: AccountInfo<'info>,
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -115,4 +139,19 @@ pub struct IntoSession<'info> {
     pub token_program: Program<'info, Token>,
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub authority: AccountInfo<'info>,
+}
+
+
+
+#[derive(Accounts)]
+pub struct BurnToken<'info> {
+    /// CHECK: This is the token that we want to mint
+    #[account(mut)]
+    pub mint: Account<'info, Mint>,
+    pub token_program: Program<'info, Token>,
+    /// CHECK: This is the token account that we want to mint tokens to
+    #[account(mut)]
+    pub from: AccountInfo<'info>,
+    /// CHECK: the authority of the mint account
+    pub authority: Signer<'info>,
 }

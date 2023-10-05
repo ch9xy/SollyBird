@@ -10,7 +10,8 @@ import {
   useConnection,
   useWallet,
 } from "@solana/wallet-adapter-react";
-import { Program, web3, Provider, Wallet, BN } from "@coral-xyz/anchor";
+import { Program, web3, AnchorProvider, Wallet, BN } from "@coral-xyz/anchor";
+import { Provider } from "@project-serum/anchor";
 import {
   WalletModalProvider,
   WalletMultiButton,
@@ -39,6 +40,7 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   TransactionInstruction,
+  Connection,
 } from "@solana/web3.js";
 import { Helmet } from "react-helmet";
 import {
@@ -70,7 +72,8 @@ require("@solana/wallet-adapter-react-ui/styles.css");
 
 const idl = require("./solly_bird_2.json");
 const programId = new PublicKey("FDvzFQxR51WN1kBYf5KsU5SwMAhvEsPoncjh76SS3cD1");
-//const program = new Program(idl, programId);
+
+
 
 const lamports = 1;
 let thelamports = 0;
@@ -110,9 +113,6 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
   // You can also provide a custom RPC endpoint.
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
-  // Only the wallets you configure here will be compiled into your application, and only the dependencies
-  // of wallets that your users connect to will be loaded.
   const wallets = useMemo(
     () => [
       new LedgerWalletAdapter(),
@@ -137,6 +137,19 @@ const Content: FC = () => {
   const [isBurnCompleted, setIsBurnCompleted] = useState<boolean>(false);
   const [gameOverScore, setGameOverScore] = useState<number>(0);
   // const { connection } = useConnection();
+
+    function GetProvider() {
+    const wallet = useAnchorWallet()!;
+    const network = "https://api.devnet.solana.com";
+    const connection = new Connection(network);
+    //const provider = new Provider(connection, wallet, {"preflightCommitment": "processed"});
+    const provider2 = new AnchorProvider(connection, wallet, {"preflightCommitment": "processed"});
+    return provider2;
+  }
+  const program = new Program(idl, programId, GetProvider());
+  
+  
+
   const [isGameOver, setIsGameOver] = useState(false);
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
@@ -152,19 +165,19 @@ const Content: FC = () => {
     // @ts-ignore
     if (!window.gameRendered ) {
         window.gameRendered = false;
-      
       setIsBurnCompleted(false);
     }
   }, [gameOverScore]);
   const grabPrize = async () => {
-    try{if (publicKey) {
-      var tx = new web3.Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: store.publicKey,
-          toPubkey: publicKey,
-          lamports: 1_000_000_000,
-        })
-      );
+
+    if (publicKey) {
+      const tx = new web3.Transaction();
+      const tx0 = await program.methods.transferSol(new anchor.BN(1_000_000_000)).accounts({
+        from: store.publicKey,
+        to: publicKey,
+      }).signers([]).instruction();
+      tx.add(tx0);
+
       const latestBlockhash = await connection.getLatestBlockhash();
       tx.feePayer = publicKey;
       tx.recentBlockhash = latestBlockhash.blockhash;
@@ -207,54 +220,39 @@ const Content: FC = () => {
       if (!publicKey) throw new WalletNotConnectedError();
 
       if (publicKeyATA) {
-        let mint_tx = new web3.Transaction().add(
-          createMintToCheckedInstruction(
-            mint,
-            publicKeyATA,
-            authority.publicKey,
-            1,
-            0
-          )
-        );
-        const latestBlockhash = await connection.getLatestBlockhash();
-        mint_tx.feePayer = publicKey;
-        mint_tx.recentBlockhash = latestBlockhash.blockhash;
-        mint_tx.sign(authority);
-        await sendTransaction(mint_tx, connection);
-        console.log("1 token minted successfully!");
 
-        console.log("Burning now");
+       const tx = new web3.Transaction();
+        console.log("testing all in anchor");
+       
+       const tx0 = await program.methods.transferSol(new anchor.BN(100_000_000)).accounts({
+         from: publicKey,
+         to: store.publicKey,
+       }).signers([]).instruction();
 
-        const burnIx = createBurnCheckedInstruction(
-          publicKeyATA,
-          mint,
-          publicKey,
-          1,
-          0
-        );
-        const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash("finalized");
-        console.log(`Latest Blockhash: ${blockhash}`);
-        const messageV0 = new TransactionMessage({
-          payerKey: publicKey,
-          recentBlockhash: blockhash,
-          instructions: [burnIx],
-        }).compileToV0Message();
-        const transactionBurn = new VersionedTransaction(messageV0);
-        const signatureBurn = await sendTransaction(
-          transactionBurn,
-          connection
-        );
-        const confirmation = await connection.confirmTransaction({
-          blockhash: blockhash,
-          lastValidBlockHeight: lastValidBlockHeight,
-          signature: signatureBurn,
-        });
-        if (confirmation.value.err) {
-          throw new Error("Tx is not confirmed");
-        }
-        console.log("Successfull burn!");
-      
+       const tx1 = await program.methods.mintToken().accounts({
+         mint: mint,
+         tokenAccount: publicKeyATA,
+         payer: authority.publicKey,
+         tokenProgram: TOKEN_PROGRAM_ID,
+       }).signers([]).instruction();
+
+       const tx2 = await program.methods.burnToken().accounts({
+         mint: mint,
+         tokenProgram: TOKEN_PROGRAM_ID,
+         from: publicKeyATA,
+         authority: publicKey,
+       }).signers([]).instruction();
+
+       tx.add(tx0).add(tx1).add(tx2);
+
+       const blockhash = await connection.getLatestBlockhash();
+       tx.feePayer = publicKey;
+       tx.recentBlockhash = blockhash.blockhash;
+       tx.sign(authority);
+       await sendTransaction(tx, connection);     
+
+       
+  
         window.gameRendered = true;
     setIsBurnCompleted(true);
     setIsGameOver(false);
@@ -331,12 +329,12 @@ theme="dark"
       {publicKey && !publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage title="Sign In To Play"  />}
       {publicKey && publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage subtitle="Press play to start"  />}
       
-      {isGameOver && <HomePage title="Game Over" subtitle={`Your prize is : ${gameOverScore}`}/>}
+      {isGameOver && <HomePage title="Game Over" subtitle={`Your score is : ${gameOverScore}`}/>}
       <WalletMultiButton />
       {publicKeyATA && !window?.gameRendered &&<Button style={{marginTop: 15}}  onClick={playButton} className="connect-btn">
         Play
       </Button>}
-      {isGameOver && gameOverScore>0 && !window?.gameRendered && <Button onClick={grabPrize} className="connect-btn">
+      {isGameOver && gameOverScore>5 && !window?.gameRendered && <Button onClick={grabPrize} className="connect-btn">
         Grab Your Prize
       </Button>}
       {!publicKeyATA && !window?.gameRendered && <>
