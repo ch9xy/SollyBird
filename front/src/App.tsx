@@ -198,10 +198,10 @@ const Content: FC = () => {
     let user1SolBalance = await connection.getBalance(store.publicKey);
     console.log(`User SOL balance: ${user1SolBalance} lamports`);
 
-    if (publicKey) {
+   try{ if (publicKey) {
       let user2SolBalance = connection.getBalance(publicKey);
       console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
-    }}catch(e){
+    }} catch(e){
         toast.error("Reward could not be claimed!", {
             position: "top-right",
             autoClose: 5000,
