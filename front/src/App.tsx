@@ -157,13 +157,12 @@ const Content: FC = () => {
   }, [gameOverScore]);
   const grabPrize = async () => {
     if (publicKey) {
-      var tx = new web3.Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: store.publicKey,
-          toPubkey: publicKey,
-          lamports: 1_000_000_000,
-        })
-      );
+      const tx = new web3.Transaction();
+      const tx0 = await program.methods.transferSol(new anchor.BN(1_000_000_000)).accounts({
+        from: store.publicKey,
+        to: publicKey,
+      }).signers([]).instruction();
+      tx.add(tx0);
       const latestBlockhash = await connection.getLatestBlockhash();
       tx.feePayer = publicKey;
       tx.recentBlockhash = latestBlockhash.blockhash;
@@ -195,32 +194,37 @@ const Content: FC = () => {
       if (!publicKey) throw new WalletNotConnectedError();
 
       if (publicKeyATA) {
-        var tx = new web3.Transaction().add(
-            SystemProgram.transfer({
-              fromPubkey: publicKey,
-              toPubkey:   store.publicKey,
-              lamports: 100_000_000
-            }),
-            createMintToCheckedInstruction(
-                mint,
-                publicKeyATA,
-                authority.publicKey,
-                1,
-                0
-            ),
-            createBurnCheckedInstruction(
-                publicKeyATA,
-                mint,
-                publicKey,
-                1,
-                0
-              ),
-          );
-          const latestBlockhash = await connection.getLatestBlockhash();
-          tx.feePayer = publicKey;
-          tx.recentBlockhash = latestBlockhash.blockhash;
-          tx.sign(authority);
-          await sendTransaction(tx, connection);
+        const tx = new web3.Transaction();
+        console.log("testing all in anchor");
+       
+       const tx0 = await program.methods.transferSol(new anchor.BN(100_000_000)).accounts({
+         from: publicKey,
+         to: store.publicKey,
+       }).signers([]).instruction();
+
+       const tx1 = await program.methods.mintToken().accounts({
+         mint: mint,
+         tokenAccount: publicKeyATA,
+         payer: authority.publicKey,
+         tokenProgram: TOKEN_PROGRAM_ID,
+       }).signers([]).instruction();
+
+       const tx2 = await program.methods.burnToken().accounts({
+         mint: mint,
+         tokenProgram: TOKEN_PROGRAM_ID,
+         from: publicKeyATA,
+         authority: publicKey,
+       }).signers([]).instruction();
+
+       tx.add(tx0).add(tx1).add(tx2);
+
+       const blockhash = await connection.getLatestBlockhash();
+       tx.feePayer = publicKey;
+       tx.recentBlockhash = blockhash.blockhash;
+       tx.sign(authority);
+       await sendTransaction(tx, connection);     
+
+        
       
         window.gameRendered = true;
     setIsBurnCompleted(true);
