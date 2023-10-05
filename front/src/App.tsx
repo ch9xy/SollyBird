@@ -168,24 +168,6 @@ const Content: FC = () => {
       tx.recentBlockhash = latestBlockhash.blockhash;
       tx.sign(store);
       await sendTransaction(tx, connection);
-
-      let user1SolBalance = await connection.getBalance(store.publicKey);
-      console.log(`User SOL balance: ${user1SolBalance} lamports`);
-
-      // Get SOL balance for the admin account
-      if (publicKey) {
-        let user2SolBalance = await connection.getBalance(publicKey);
-        console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
-      }
-    }
-
-    console.log("After: ");
-    let user1SolBalance = await connection.getBalance(store.publicKey);
-    console.log(`User SOL balance: ${user1SolBalance} lamports`);
-
-    if (publicKey) {
-      let user2SolBalance = connection.getBalance(publicKey);
-      console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
     }
   };
 
