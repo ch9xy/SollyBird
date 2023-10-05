@@ -15,7 +15,8 @@ import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "../src/css/bootstrap.css";
 import {
   //GlowWalletAdapter,
@@ -156,7 +157,7 @@ const Content: FC = () => {
     }
   }, [gameOverScore]);
   const grabPrize = async () => {
-    if (publicKey) {
+    try{if (publicKey) {
       var tx = new web3.Transaction().add(
         SystemProgram.transfer({
           fromPubkey: store.publicKey,
@@ -187,6 +188,17 @@ const Content: FC = () => {
     if (publicKey) {
       let user2SolBalance = connection.getBalance(publicKey);
       console.log(`Admin SOL balance: ${user2SolBalance} lamports`);
+    }}catch(e){
+        toast.error("Reward could not be claimed!", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+            });
     }
   };
 
@@ -303,10 +315,18 @@ const Content: FC = () => {
         <Helmet>
         <script src="./game.js" type="text/javascript" />
       </Helmet>
-     {/* <div className="score-container">
-        <div id="bestScore"></div>
-        <div id="currentScore"></div>
-      </div> */}
+     <ToastContainer
+position="top-right"
+autoClose={5000}
+hideProgressBar={false}
+newestOnTop={false}
+closeOnClick
+rtl={false}
+pauseOnFocusLoss
+draggable
+pauseOnHover
+theme="dark"
+/>
       {!publicKey && !window?.gameRendered && <HomePage title= "Solly Bird" subtitle="Play 2 earn flappy bird game in speed of solana" />}
       {publicKey && !publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage title="Sign In To Play"  />}
       {publicKey && publicKeyATA && !isGameOver && !window?.gameRendered && <HomePage subtitle="Press play to start"  />}
